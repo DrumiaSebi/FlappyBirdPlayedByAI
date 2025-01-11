@@ -4,22 +4,31 @@ import torch.nn.functional as F
 
 
 class NeuralNetwork(nn.Module):
-    def __init__(self, input_dim, output_dim, hidden_dim):
+    def __init__(self, input_dim, output_dim, hidden_dim, simple=False):
         super(NeuralNetwork, self).__init__()
+        self.simple = simple
 
-        # input layer is by default
-        # first hidden layer, Linear specifies it is fully connected:
-        self.fc1 = nn.Linear(input_dim, hidden_dim)
-        # second hidden layer:
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim // 2)
-        # output:
-        self.fc3 = nn.Linear(hidden_dim // 2, output_dim)
+        if simple:
+            self.fc1 = nn.Linear(input_dim, hidden_dim)
+            self.fc2 = nn.Linear(hidden_dim, output_dim)
+        else:
+            # input layer is by default
+            # first hidden layer, Linear specifies it is fully connected:
+            self.fc1 = nn.Linear(input_dim, hidden_dim)
+            # second hidden layer:
+            self.fc2 = nn.Linear(hidden_dim, hidden_dim // 2)
+            # output:
+            self.fc3 = nn.Linear(hidden_dim // 2, output_dim)
 
     def forward(self, x):
-        x1 = F.leaky_relu(self.fc1(x), 0.01)
-        x2 = F.leaky_relu(self.fc2(x1), 0.01)
-        # we don't apply activation function to the output
-        return self.fc3(x2)
+        if self.simple:
+            x = F.relu(self.fc1(x))
+            return self.fc2(x)
+        else:
+            x1 = F.leaky_relu(self.fc1(x), 0.01)
+            x2 = F.leaky_relu(self.fc2(x1), 0.01)
+            # we don't apply activation function to the output
+            return self.fc3(x2)
 
 # Test
 # input_dim = 12
