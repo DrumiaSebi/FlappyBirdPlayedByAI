@@ -16,14 +16,14 @@ from NeuralNetwork import NeuralNetwork
 
 
 REPLAY_MEMORY_SIZE = 100000
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 NR_HIDDEN_NEURONS = 512  # try 256
 EPSILON_INIT = 1
 DECAY_RATE = 0.999995
-MINIM_EPSILON_THRESHOLD = 0.1
+MINIM_EPSILON_THRESHOLD = 0.2
 MIN_STEPS_FOR_SYNC = 10
-LEARNING_RATE_NN = 0.0001  # try with 0.001
-DISCOUNT_FACTOR_GAMMA = 0.99
+LEARNING_RATE_NN = 0.001  # try with 0.0001
+DISCOUNT_FACTOR_GAMMA = 0.99  # try 0.99
 REWARD_TO_STOP = 100000
 
 DATE_FORMAT = "%m-%d %H:%M:%S"
@@ -104,6 +104,7 @@ def run_alg(training=True):
         # initial time
         start_time = datetime.now()
         last_graph_update_time = start_time
+        nr_tens_last_episode_print = 0
 
         # log messages
         log_message = f"{start_time.strftime(DATE_FORMAT)}: Training started..."
@@ -159,6 +160,7 @@ def run_alg(training=True):
 
         # switch to eval mode
         policy_net.eval()
+        test_instance = 1
 
     # itertools, because we are going to stop the algorithm ourselves
     for episode in itertools.count():
@@ -221,6 +223,11 @@ def run_alg(training=True):
             if current_time - last_graph_update_time > timedelta(seconds=10):
                 save_graph(rewards_per_episode, epsilon_history)
                 last_graph_update_time = current_time
+                if nr_tens_last_episode_print > 9:
+                    print(f"At episode: {episode}")
+                    nr_tens_last_episode_print = 0
+                else:
+                    nr_tens_last_episode_print += 1
 
             # decrease epsilon after an episode (for epsilon greedy-alg):
             epsilon = max(MINIM_EPSILON_THRESHOLD, epsilon * DECAY_RATE)
@@ -240,12 +247,15 @@ def run_alg(training=True):
                     # update means sync with policy net
                     target_net.load_state_dict(policy_net.state_dict())
                     step_count = 0
+        else:
+            print(f"Episode reward: {episode_reward} at test instance: {test_instance}")
+            test_instance += 1
 
-        env.close()
+        # env.close()
 
 
-run_alg(training=True)
-# run_alg(training=False)
+# run_alg(training=True)
+run_alg(training=False)
 
 # 30min -> 13
 
